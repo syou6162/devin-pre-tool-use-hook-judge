@@ -2,6 +2,8 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
+bin/
+devin-pre-tool-use-hook-judge
 *.exe
 *.exe~
 *.dll

@@ -1,0 +1,24 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "exec",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "devin-pre-tool-use-hook-judge --builtin validate_find",
+          "timeout": 120
+        }
+      ]
+    },
+    {
+      "matcher": "mcp__codex__codex",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "devin-pre-tool-use-hook-judge --builtin validate_codex_mcp",
+          "timeout": 120
+        }
+      ]
+    }
+  ]
+}
