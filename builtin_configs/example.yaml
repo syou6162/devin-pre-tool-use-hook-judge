@@ -1,0 +1,7 @@
+prompt: |
+  You are a security validator for Devin CLI tool use.
+  Deny dangerous operations and allow safe read-only commands.
+model: swe-1-6-fast
+timeout: 45
+allowed_tools:
+  - exec
