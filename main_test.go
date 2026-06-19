@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"bytes"
@@ -18,13 +18,13 @@ func TestRunVersion(t *testing.T) {
 		os.Stdout = oldStdout
 	}()
 
-	err = Run([]string{"-version"})
+	err = run([]string{"-version"})
 	if closeErr := w.Close(); closeErr != nil {
 		t.Fatal(closeErr)
 	}
 
 	if err != nil {
-		t.Fatalf("Run returned error: %v", err)
+		t.Fatalf("run returned error: %v", err)
 	}
 
 	var buf bytes.Buffer
@@ -50,13 +50,13 @@ func TestRunHelloWorld(t *testing.T) {
 		os.Stdout = oldStdout
 	}()
 
-	err = Run(nil)
+	err = run(nil)
 	if closeErr := w.Close(); closeErr != nil {
 		t.Fatal(closeErr)
 	}
 
 	if err != nil {
-		t.Fatalf("Run returned error: %v", err)
+		t.Fatalf("run returned error: %v", err)
 	}
 
 	var buf bytes.Buffer
