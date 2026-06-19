@@ -14,10 +14,14 @@ func TestRunVersion(t *testing.T) {
 		t.Fatal(err)
 	}
 	os.Stdout = w
+	defer func() {
+		os.Stdout = oldStdout
+	}()
 
 	err = Run([]string{"-version"})
-	w.Close()
-	os.Stdout = oldStdout
+	if closeErr := w.Close(); closeErr != nil {
+		t.Fatal(closeErr)
+	}
 
 	if err != nil {
 		t.Fatalf("Run returned error: %v", err)
@@ -42,10 +46,14 @@ func TestRunHelloWorld(t *testing.T) {
 		t.Fatal(err)
 	}
 	os.Stdout = w
+	defer func() {
+		os.Stdout = oldStdout
+	}()
 
 	err = Run(nil)
-	w.Close()
-	os.Stdout = oldStdout
+	if closeErr := w.Close(); closeErr != nil {
+		t.Fatal(closeErr)
+	}
 
 	if err != nil {
 		t.Fatalf("Run returned error: %v", err)
