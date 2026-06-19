@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/syou6162/devin-pre-tool-use-hook-judge/internal/constants"
 )
 
 const (
 	ExitSuccess = 0
 	ExitError   = 1
+
+	version = "0.1.0"
 )
 
 // Root is the top-level command dispatcher for devin-pre-tool-use-hook-judge.
@@ -41,7 +41,7 @@ func (r *Root) Run(args []string) int {
 	}
 
 	if *showVersion {
-		fmt.Fprintf(r.stdout, "devin-pre-tool-use-hook-judge %s\n", constants.Version)
+		fmt.Fprintf(r.stdout, "devin-pre-tool-use-hook-judge %s\n", version)
 		return ExitSuccess
 	}
 
