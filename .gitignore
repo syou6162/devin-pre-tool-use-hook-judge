@@ -27,6 +27,9 @@ go.work.sum
 # env file
 .env
 
+# Local build artifacts
+/devin-pre-tool-use-hook-judge
+
 # Editor/IDE
 # .idea/
 # .vscode/

@@ -1,0 +1,14 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "^exec$",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "devin-pre-tool-use-hook-judge --builtin validate_git_push",
+          "timeout": 120
+        }
+      ]
+    }
+  ]
+}
