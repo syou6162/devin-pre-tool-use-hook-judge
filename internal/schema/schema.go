@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -80,7 +79,7 @@ func ParseDevinInput(r io.Reader) (JudgeInput, error) {
 		return JudgeInput{}, err
 	}
 
-	return toJudgeInput(devin, raw)
+	return toJudgeInput(devin, raw), nil
 }
 
 func validateDevinInput(input *DevinInput, toolInputRaw json.RawMessage) error {
@@ -106,16 +105,7 @@ func validateDevinInput(input *DevinInput, toolInputRaw json.RawMessage) error {
 	return nil
 }
 
-func toJudgeInput(devin DevinInput, raw rawInput) (JudgeInput, error) {
-	sessionID := raw.SessionID
-	if sessionID == "" {
-		var err error
-		sessionID, err = generateSessionID()
-		if err != nil {
-			return JudgeInput{}, fmt.Errorf("generate session_id: %w", err)
-		}
-	}
-
+func toJudgeInput(devin DevinInput, raw rawInput) JudgeInput {
 	cwd := raw.Cwd
 	if cwd == "" {
 		cwd = os.Getenv("PWD")
@@ -127,24 +117,14 @@ func toJudgeInput(devin DevinInput, raw rawInput) (JudgeInput, error) {
 	}
 
 	return JudgeInput{
-		SessionID:      sessionID,
+		SessionID:      raw.SessionID,
 		TranscriptPath: raw.TranscriptPath,
 		Cwd:            cwd,
 		PermissionMode: permissionMode,
 		HookEventName:  devin.HookEventName,
 		ToolName:       devin.ToolName,
 		ToolInput:      devin.ToolInput,
-	}, nil
-}
-
-func generateSessionID() (string, error) {
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
 	}
-	b[6] = (b[6] & 0x0f) | 0x40
-	b[8] = (b[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
 }
 
 // BlockOutput returns a DevinOutput that blocks execution with the given reason.

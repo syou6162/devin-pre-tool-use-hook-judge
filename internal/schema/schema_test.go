@@ -30,8 +30,8 @@ func TestParseDevinInputValid(t *testing.T) {
 	if judge.ToolInput["command"] != "ls" {
 		t.Errorf("ToolInput[command] = %v, want %q", judge.ToolInput["command"], "ls")
 	}
-	if judge.SessionID == "" {
-		t.Error("SessionID should be generated when not provided")
+	if judge.SessionID != "" {
+		t.Errorf("SessionID = %q, want empty string", judge.SessionID)
 	}
 	if judge.TranscriptPath != "" {
 		t.Errorf("TranscriptPath = %q, want empty string", judge.TranscriptPath)
@@ -235,25 +235,6 @@ func TestParseDevinInputAtMaxSize(t *testing.T) {
 	_, err := ParseDevinInput(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("ParseDevinInput() error = %v", err)
-	}
-}
-
-func TestGenerateSessionIDUnique(t *testing.T) {
-	t.Parallel()
-
-	id1, err := generateSessionID()
-	if err != nil {
-		t.Fatalf("generateSessionID() error = %v", err)
-	}
-	id2, err := generateSessionID()
-	if err != nil {
-		t.Fatalf("generateSessionID() error = %v", err)
-	}
-	if id1 == "" {
-		t.Error("generateSessionID() returned empty string")
-	}
-	if id1 == id2 {
-		t.Error("generateSessionID() should produce unique values")
 	}
 }
 
