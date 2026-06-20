@@ -54,8 +54,7 @@ func (r *Root) Run(args []string) int {
 }
 
 func (r *Root) runHook() int {
-	_, err := schema.ParseDevinInput(r.stdin)
-	if err != nil {
+	if _, err := schema.ParseDevinInput(r.stdin); err != nil {
 		output := schema.BlockOutput(err.Error())
 		if writeErr := schema.WriteOutput(r.stdout, output); writeErr != nil {
 			fmt.Fprintf(r.stderr, "%v\n", writeErr)

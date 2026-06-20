@@ -16,79 +16,19 @@ func TestParseDevinInputValid(t *testing.T) {
 		"tool_input": {"command": "ls"}
 	}`
 
-	judge, err := ParseDevinInput(strings.NewReader(input))
+	devin, err := ParseDevinInput(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("ParseDevinInput() error = %v", err)
 	}
 
-	if judge.HookEventName != "PreToolUse" {
-		t.Errorf("HookEventName = %q, want %q", judge.HookEventName, "PreToolUse")
+	if devin.HookEventName != "PreToolUse" {
+		t.Errorf("HookEventName = %q, want %q", devin.HookEventName, "PreToolUse")
 	}
-	if judge.ToolName != "bash" {
-		t.Errorf("ToolName = %q, want %q", judge.ToolName, "bash")
+	if devin.ToolName != "bash" {
+		t.Errorf("ToolName = %q, want %q", devin.ToolName, "bash")
 	}
-	if judge.ToolInput["command"] != "ls" {
-		t.Errorf("ToolInput[command] = %v, want %q", judge.ToolInput["command"], "ls")
-	}
-	if judge.SessionID != "" {
-		t.Errorf("SessionID = %q, want empty string", judge.SessionID)
-	}
-	if judge.TranscriptPath != "" {
-		t.Errorf("TranscriptPath = %q, want empty string", judge.TranscriptPath)
-	}
-	if judge.PermissionMode != defaultPermissionMode {
-		t.Errorf("PermissionMode = %q, want %q", judge.PermissionMode, defaultPermissionMode)
-	}
-}
-
-func TestParseDevinInputWithOptionalFields(t *testing.T) {
-	t.Setenv("PWD", "/test/workdir")
-
-	input := `{
-		"hook_event_name": "PreToolUse",
-		"tool_name": "bash",
-		"tool_input": {"command": "ls"},
-		"session_id": "sess-123",
-		"transcript_path": "/tmp/transcript.json",
-		"cwd": "/custom/cwd",
-		"permission_mode": "strict"
-	}`
-
-	judge, err := ParseDevinInput(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("ParseDevinInput() error = %v", err)
-	}
-
-	if judge.SessionID != "sess-123" {
-		t.Errorf("SessionID = %q, want %q", judge.SessionID, "sess-123")
-	}
-	if judge.TranscriptPath != "/tmp/transcript.json" {
-		t.Errorf("TranscriptPath = %q, want %q", judge.TranscriptPath, "/tmp/transcript.json")
-	}
-	if judge.Cwd != "/custom/cwd" {
-		t.Errorf("Cwd = %q, want %q", judge.Cwd, "/custom/cwd")
-	}
-	if judge.PermissionMode != "strict" {
-		t.Errorf("PermissionMode = %q, want %q", judge.PermissionMode, "strict")
-	}
-}
-
-func TestParseDevinInputDefaultCwdFromEnv(t *testing.T) {
-	t.Setenv("PWD", "/env/workdir")
-
-	input := `{
-		"hook_event_name": "PreToolUse",
-		"tool_name": "bash",
-		"tool_input": {"command": "ls"}
-	}`
-
-	judge, err := ParseDevinInput(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("ParseDevinInput() error = %v", err)
-	}
-
-	if judge.Cwd != "/env/workdir" {
-		t.Errorf("Cwd = %q, want %q", judge.Cwd, "/env/workdir")
+	if devin.ToolInput["command"] != "ls" {
+		t.Errorf("ToolInput[command] = %v, want %q", devin.ToolInput["command"], "ls")
 	}
 }
 

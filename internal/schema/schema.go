@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 )
 
 const (
 	DecisionApprove = "approve"
 	DecisionBlock   = "block"
 
-	defaultPermissionMode = "default"
 	// MaxInputSize is the maximum allowed stdin payload size in bytes.
 	MaxInputSize = 1 << 20 // 1 MiB
 )
@@ -23,63 +21,46 @@ type DevinInput struct {
 	ToolInput     map[string]interface{} `json:"tool_input"`
 }
 
-// JudgeInput is the internal representation used for hook validation.
-type JudgeInput struct {
-	SessionID      string                 `json:"session_id"`
-	TranscriptPath string                 `json:"transcript_path"`
-	Cwd            string                 `json:"cwd"`
-	PermissionMode string                 `json:"permission_mode"`
-	HookEventName  string                 `json:"hook_event_name"`
-	ToolName       string                 `json:"tool_name"`
-	ToolInput      map[string]interface{} `json:"tool_input"`
-}
-
 // DevinOutput is the JSON payload written to stdout for Devin CLI.
 type DevinOutput struct {
 	Decision string `json:"decision"`
 	Reason   string `json:"reason,omitempty"`
 }
 
-type rawInput struct {
-	HookEventName  string          `json:"hook_event_name"`
-	ToolName       string          `json:"tool_name"`
-	ToolInput      json.RawMessage `json:"tool_input"`
-	SessionID      string          `json:"session_id"`
-	TranscriptPath string          `json:"transcript_path"`
-	Cwd            string          `json:"cwd"`
-	PermissionMode string          `json:"permission_mode"`
-}
-
-// ParseDevinInput reads JSON from r, validates the schema, and converts it to JudgeInput.
-func ParseDevinInput(r io.Reader) (JudgeInput, error) {
+// ParseDevinInput reads JSON from r, validates the schema, and returns DevinInput.
+func ParseDevinInput(r io.Reader) (DevinInput, error) {
 	limited := io.LimitReader(r, MaxInputSize+1)
 	data, err := io.ReadAll(limited)
 	if err != nil {
-		return JudgeInput{}, fmt.Errorf("read input: %w", err)
+		return DevinInput{}, fmt.Errorf("read input: %w", err)
 	}
 	if len(data) > MaxInputSize {
-		return JudgeInput{}, fmt.Errorf("input exceeds maximum size of %d bytes", MaxInputSize)
+		return DevinInput{}, fmt.Errorf("input exceeds maximum size of %d bytes", MaxInputSize)
 	}
 
 	if len(data) == 0 {
-		return JudgeInput{}, fmt.Errorf("input is empty")
+		return DevinInput{}, fmt.Errorf("input is empty")
 	}
 
-	var raw rawInput
+	var raw struct {
+		HookEventName string          `json:"hook_event_name"`
+		ToolName      string          `json:"tool_name"`
+		ToolInput     json.RawMessage `json:"tool_input"`
+	}
 	if err := json.Unmarshal(data, &raw); err != nil {
-		return JudgeInput{}, fmt.Errorf("parse JSON: %w", err)
+		return DevinInput{}, fmt.Errorf("parse JSON: %w", err)
 	}
 
-	devin := DevinInput{
+	input := DevinInput{
 		HookEventName: raw.HookEventName,
 		ToolName:      raw.ToolName,
 	}
 
-	if err := validateDevinInput(&devin, raw.ToolInput); err != nil {
-		return JudgeInput{}, err
+	if err := validateDevinInput(&input, raw.ToolInput); err != nil {
+		return DevinInput{}, err
 	}
 
-	return toJudgeInput(devin, raw), nil
+	return input, nil
 }
 
 func validateDevinInput(input *DevinInput, toolInputRaw json.RawMessage) error {
@@ -103,28 +84,6 @@ func validateDevinInput(input *DevinInput, toolInputRaw json.RawMessage) error {
 
 	input.ToolInput = toolInput
 	return nil
-}
-
-func toJudgeInput(devin DevinInput, raw rawInput) JudgeInput {
-	cwd := raw.Cwd
-	if cwd == "" {
-		cwd = os.Getenv("PWD")
-	}
-
-	permissionMode := raw.PermissionMode
-	if permissionMode == "" {
-		permissionMode = defaultPermissionMode
-	}
-
-	return JudgeInput{
-		SessionID:      raw.SessionID,
-		TranscriptPath: raw.TranscriptPath,
-		Cwd:            cwd,
-		PermissionMode: permissionMode,
-		HookEventName:  devin.HookEventName,
-		ToolName:       devin.ToolName,
-		ToolInput:      devin.ToolInput,
-	}
 }
 
 // BlockOutput returns a DevinOutput that blocks execution with the given reason.
