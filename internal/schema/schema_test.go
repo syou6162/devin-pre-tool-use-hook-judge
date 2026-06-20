@@ -204,11 +204,51 @@ func TestWriteOutputBlock(t *testing.T) {
 	}
 }
 
+func TestParseDevinInputExceedsMaxSize(t *testing.T) {
+	t.Parallel()
+
+	input := strings.Repeat("a", MaxInputSize+1)
+	_, err := ParseDevinInput(strings.NewReader(input))
+	if err == nil {
+		t.Fatal("ParseDevinInput() expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "input exceeds maximum size") {
+		t.Errorf("error = %q, want substring %q", err.Error(), "input exceeds maximum size")
+	}
+}
+
+func TestParseDevinInputAtMaxSize(t *testing.T) {
+	t.Parallel()
+
+	base := `{"hook_event_name":"PreToolUse","tool_name":"bash","tool_input":{"data":"`
+	suffix := `"}}`
+	paddingLen := MaxInputSize - len(base) - len(suffix)
+	if paddingLen < 0 {
+		t.Fatalf("base input exceeds MaxInputSize")
+	}
+	input := base + strings.Repeat("x", paddingLen) + suffix
+
+	if len(input) != MaxInputSize {
+		t.Fatalf("test input length = %d, want %d", len(input), MaxInputSize)
+	}
+
+	_, err := ParseDevinInput(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("ParseDevinInput() error = %v", err)
+	}
+}
+
 func TestGenerateSessionIDUnique(t *testing.T) {
 	t.Parallel()
 
-	id1 := generateSessionID()
-	id2 := generateSessionID()
+	id1, err := generateSessionID()
+	if err != nil {
+		t.Fatalf("generateSessionID() error = %v", err)
+	}
+	id2, err := generateSessionID()
+	if err != nil {
+		t.Fatalf("generateSessionID() error = %v", err)
+	}
 	if id1 == "" {
 		t.Error("generateSessionID() returned empty string")
 	}

@@ -13,6 +13,8 @@ const (
 	DecisionBlock   = "block"
 
 	defaultPermissionMode = "default"
+	// MaxInputSize is the maximum allowed stdin payload size in bytes.
+	MaxInputSize = 1 << 20 // 1 MiB
 )
 
 // DevinInput is the JSON payload received from Devin CLI via stdin.
@@ -51,9 +53,13 @@ type rawInput struct {
 
 // ParseDevinInput reads JSON from r, validates the schema, and converts it to JudgeInput.
 func ParseDevinInput(r io.Reader) (JudgeInput, error) {
-	data, err := io.ReadAll(r)
+	limited := io.LimitReader(r, MaxInputSize+1)
+	data, err := io.ReadAll(limited)
 	if err != nil {
 		return JudgeInput{}, fmt.Errorf("read input: %w", err)
+	}
+	if len(data) > MaxInputSize {
+		return JudgeInput{}, fmt.Errorf("input exceeds maximum size of %d bytes", MaxInputSize)
 	}
 
 	if len(data) == 0 {
@@ -74,7 +80,7 @@ func ParseDevinInput(r io.Reader) (JudgeInput, error) {
 		return JudgeInput{}, err
 	}
 
-	return toJudgeInput(devin, raw), nil
+	return toJudgeInput(devin, raw)
 }
 
 func validateDevinInput(input *DevinInput, toolInputRaw json.RawMessage) error {
@@ -100,10 +106,14 @@ func validateDevinInput(input *DevinInput, toolInputRaw json.RawMessage) error {
 	return nil
 }
 
-func toJudgeInput(devin DevinInput, raw rawInput) JudgeInput {
+func toJudgeInput(devin DevinInput, raw rawInput) (JudgeInput, error) {
 	sessionID := raw.SessionID
 	if sessionID == "" {
-		sessionID = generateSessionID()
+		var err error
+		sessionID, err = generateSessionID()
+		if err != nil {
+			return JudgeInput{}, fmt.Errorf("generate session_id: %w", err)
+		}
 	}
 
 	cwd := raw.Cwd
@@ -124,15 +134,17 @@ func toJudgeInput(devin DevinInput, raw rawInput) JudgeInput {
 		HookEventName:  devin.HookEventName,
 		ToolName:       devin.ToolName,
 		ToolInput:      devin.ToolInput,
-	}
+	}, nil
 }
 
-func generateSessionID() string {
+func generateSessionID() (string, error) {
 	b := make([]byte, 16)
-	_, _ = rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
 	b[6] = (b[6] & 0x0f) | 0x40
 	b[8] = (b[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
 }
 
 // BlockOutput returns a DevinOutput that blocks execution with the given reason.
